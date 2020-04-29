@@ -27,12 +27,18 @@ maze = [
     1 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1;
     1 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1;
     1 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1;
-    1 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 3 0 0 1;
+    1 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1;
     1 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1;
     1 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1;
     1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1;
     ];
+distance_maze = maze;
+inf = 10000;
+distance_maze(distance_maze==0) = inf;
 starting_position = [2, 2];
+goal = [22, 22];
+distance_maze(starting_position(1), starting_position(2)) = 0;
+maze(goal(1), goal(2)) = 3;
 linear_obstacle_indices = find(maze==1);
 sz = size(maze);
 [obstacle_row_ind, obstacle_col_ind] = ind2sub(sz, linear_obstacle_indices);
@@ -40,7 +46,8 @@ linear_goal_index = find(maze==3);
 [goal_row_ind, goal_col_ind] = ind2sub(sz, linear_goal_index);
 
 
-max_iterations = 1000;
+max_iterations = 10000;
+finished = 0;
 
 frontier = zeros(10000, 2);
 front = 1;
@@ -76,7 +83,6 @@ rectangle('Position', [starting_position(1)-box_width/2 starting_position(2)-box
 
 axis([1, sz(1), 1, sz(2)]);
 pbaspect([1 1 1]);
-
 camroll(270);
 %% Main Loop:
 for t = 1:max_iterations
@@ -87,7 +93,6 @@ for t = 1:max_iterations
        return
     end
    
-    
     current_node = frontier(front, :);
     front = front + 1;
     maze(current_node(1), current_node(2)) = -1;
@@ -110,6 +115,10 @@ for t = 1:max_iterations
     for i=1:length(exploration_array)
        if (maze(exploration_array(i, 1), exploration_array(i, 2)) == 0)
           maze(exploration_array(i, 1), exploration_array(i, 2)) = 2;
+          if (distance_maze(exploration_array(i, 1), exploration_array(i, 2)) > (distance_maze(current_node(1), current_node(2)) + 1))
+              distance_maze(exploration_array(i, 1), exploration_array(i, 2))...
+                  = distance_maze(current_node(1), current_node(2)) + 1;
+          end
           rear = rear + 1;
           frontier(rear, :) = exploration_array(i, :);
           rectangle('Position',[...
@@ -118,13 +127,42 @@ for t = 1:max_iterations
             box_width box_width], 'FaceColor', [0 1 1])
        else
            if (maze(exploration_array(i, 1), exploration_array(i, 2)) == 3)
+               distance_maze(exploration_array(i, 1), exploration_array(i, 2))...
+                  = distance_maze(current_node(1), current_node(2)) + 1;
                fprintf("Goal state reached")
-               return;
+               finished = 1;
+               break;
            end
        end
     end
     
-    figure(1);
+    if finished
+        break;
+    end
     
+    figure(1);
+end
+path_nodes = zeros(1000, 2);
+path_nodes(1, :) = goal;
+path_node_index = 2;
+retrace_node = goal;
 
+%% Retrace loop:
+for i = 1:max_iterations
+    rectangle('Position', [...
+        retrace_node-box_width/2 ...
+        retrace_node-box_width/2 ...
+        box_width box_width], 'FaceColor', [0 1 0])
+    retrace_array = [
+        retrace_node + [1, 0];  
+        retrace_node + [0, 1];   
+        retrace_node + [-1, 0]; 
+        retrace_node + [0, -1]];
+    for i=1:length(retrace_array)
+        if distance_maze(retrace_array(i, 1), retrace_array(i, 2)) < distance_maze(retrace_node(1), retrace_node(2))
+           path_nodes(path_node_index, :) = retrace_array(i, :);
+           retrace_node = retrace_array(i, :);
+           break;
+        end
+    end
 end

@@ -76,8 +76,8 @@ rectangle('Position', [starting_position(1)-box_width/2 starting_position(2)-box
 
 axis([1, sz(1), 1, sz(2)]);
 pbaspect([1 1 1]);
-
 camroll(270);
+
 %% Main Loop:
 for t = 1:max_iterations
     %% Checking to see if frontier empty or if at goal state
@@ -88,8 +88,11 @@ for t = 1:max_iterations
     end
    
     
-    current_node = frontier(front, :);
-    front = front + 1;
+    current_node = frontier(rear, :);
+    rear = rear - 1;
+    if (maze(current_node(1), current_node(2)) == -1)
+       continue 
+    end
     maze(current_node(1), current_node(2)) = -1;
     
     %% Plotting dead nodes
@@ -99,16 +102,17 @@ for t = 1:max_iterations
             box_width box_width], 'FaceColor', [1 0 1])
         
         
-    % Frontier priority:
-    % North, East, South, West
-    exploration_array = [
-        current_node + [1, 0];   % North
-        current_node + [0, 1];   % East
-        current_node + [-1, 0];  % South
-        current_node + [0, -1]]; % West
+    % Frontier Ordering:
+    North = current_node + [-1, 0];
+    East = current_node + [0, 1];
+    South = current_node + [1, 0];
+    West = current_node + [0, -1];
+    % North -> East -> South -> West
+    exploration_array = [West; South; East; North];
 
     for i=1:length(exploration_array)
-       if (maze(exploration_array(i, 1), exploration_array(i, 2)) == 0)
+       if (maze(exploration_array(i, 1), exploration_array(i, 2)) == 0 ...
+               || maze(exploration_array(i, 1), exploration_array(i, 2)) == 2)
           maze(exploration_array(i, 1), exploration_array(i, 2)) = 2;
           rear = rear + 1;
           frontier(rear, :) = exploration_array(i, :);
