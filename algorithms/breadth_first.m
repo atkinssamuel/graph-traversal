@@ -78,6 +78,8 @@ axis([1, sz(1), 1, sz(2)]);
 pbaspect([1 1 1]);
 
 camroll(270);
+figure(1);
+pause(5);
 %% Main Loop:
 for t = 1:max_iterations
     %% Checking to see if frontier empty or if at goal state

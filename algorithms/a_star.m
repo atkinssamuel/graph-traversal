@@ -1,5 +1,6 @@
 clear all;
 hold on;
+addpath('multi-dimensional_min_heap')
 %% Maze Key
 % 1 = obstacle
 % 2 = on frontier
@@ -48,11 +49,11 @@ linear_goal_index = find(maze==3);
 max_iterations = 10000;
 finished = 0;
 
-frontier = zeros(10000, 2);
-front = 1;
-rear = 1;
-frontier(front, :) = starting_position;
-frontier_length = rear - front + 1;
+frontier = zeros(10000, 3);
+distance = sum(abs(starting_position - goal));
+N = 1;
+column = 3;
+frontier(N, :) = [starting_position, distance];
 
 %% Plotting grid:
 for j = 1:sz(1)
@@ -85,15 +86,15 @@ pbaspect([1 1 1]);
 camroll(270);
 %% Main Loop:
 for t = 1:max_iterations
-    %% Checking to see if frontier empty or if at goal state
-    frontier_length = rear - front + 1;
-    if (frontier_length == 0)
+    %% Checking to see if frontier empty
+    if (N == 0)
        pause(5);
        return
     end
    
-    current_node = frontier(front, :);
-    front = front + 1;
+    [frontier, current_node] = min_heap_extract(frontier, column, N);
+    N = N - 1;
+    current_node = current_node(1:2);
     maze(current_node(1), current_node(2)) = -1;
     
     %% Plotting dead nodes
@@ -118,11 +119,14 @@ for t = 1:max_iterations
               distance_maze(exploration_array(j, 1), exploration_array(j, 2))...
                   = distance_maze(current_node(1), current_node(2)) + 1;
           end
-          rear = rear + 1;
-          frontier(rear, :) = exploration_array(j, :);
+          distance = sum(abs(exploration_array(j, :) - goal));
+          
+          frontier = min_heap_insert(frontier, ...
+              [exploration_array(j, :), distance], column, N);
+          N = N + 1;
           rectangle('Position',[...
-            frontier(rear, 1)-box_width/2 ...
-            frontier(rear, 2)-box_width/2 ...
+            exploration_array(j, 1)-box_width/2 ...
+            exploration_array(j, 2)-box_width/2 ...
             box_width box_width], 'FaceColor', [0 1 1])
        else
            if (maze(exploration_array(j, 1), exploration_array(j, 2)) == 3)
@@ -163,7 +167,8 @@ for i = 1:max_iterations
         retrace_node + [-1, 0]; 
         retrace_node + [0, -1]];
     for j=1:length(retrace_array)
-        if distance_maze(retrace_array(j, 1), retrace_array(j, 2)) < distance_maze(retrace_node(1), retrace_node(2))
+        if distance_maze(retrace_array(j, 1), retrace_array(j, 2)) < distance_maze(retrace_node(1), retrace_node(2))...
+                && maze(retrace_array(j, 1), retrace_array(j, 2)) == -1
            path_nodes(path_node_index, :) = retrace_array(j, :);
            retrace_node = retrace_array(j, :);
            break;
