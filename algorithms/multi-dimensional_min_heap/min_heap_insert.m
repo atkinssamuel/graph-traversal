@@ -1,7 +1,6 @@
 function [array] = min_heap_insert(array, element, column, N)
     N = N + 1;
     array(N, :) = element;
-    print_heap(array, column, N);
     parent = floor(N/2);
     current = N;
     if parent < 1
@@ -14,8 +13,10 @@ function [array] = min_heap_insert(array, element, column, N)
         current = parent;
         parent = floor(current/2);
         if parent < 1
+            print_heap(array, column, N);
             return
         end
     end
+    print_heap(array, column, N);
 end
 

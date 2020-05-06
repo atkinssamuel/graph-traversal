@@ -2,6 +2,7 @@ clear all;
 hold on;
 addpath('multi-dimensional_min_heap')
 %% Maze Key
+% 0 = unexplored
 % 1 = obstacle
 % 2 = on frontier
 % -1 = dead node
@@ -50,10 +51,10 @@ max_iterations = 10000;
 finished = 0;
 
 frontier = zeros(10000, 3);
-distance = sum(abs(starting_position - goal));
+cost = sum(abs(starting_position - goal));
 N = 1;
 column = 3;
-frontier(N, :) = [starting_position, distance];
+frontier(N, :) = [starting_position, cost];
 
 %% Plotting grid:
 for j = 1:sz(1)
@@ -95,14 +96,15 @@ for t = 1:max_iterations
     [frontier, current_node] = min_heap_extract(frontier, column, N);
     N = N - 1;
     current_node = current_node(1:2);
-    maze(current_node(1), current_node(2)) = -1;
+    
     
     %% Plotting dead nodes
     rectangle('Position',[...
             current_node(1)-box_width/2 ...
             current_node(2)-box_width/2 ...
             box_width box_width], 'FaceColor', [1 0 1])
-        
+
+     
         
     % Frontier priority:
     % North, East, South, West
@@ -111,23 +113,45 @@ for t = 1:max_iterations
         current_node + [0, 1];   % East
         current_node + [-1, 0];  % South
         current_node + [0, -1]]; % West
+    
+    min_distance = inf;
+    if t == 1
+        min_distance = 0;
+    end
+    for k=1:length(exploration_array)
+        if (distance_maze(exploration_array(k, 1), ...
+                exploration_array(k, 2)) + 1 < min_distance)
+            min_distance = ...
+                distance_maze(exploration_array(k, 1),...
+                exploration_array(k, 2)) + 1;
+        end
+    end
+    distance_maze(current_node(1), ...
+        current_node(2)) = min_distance;
 
+    
+    
+    % Adding to the frontier:
     for j=1:length(exploration_array)
+       % We want to add to the frontier if it is unexplored
        if (maze(exploration_array(j, 1), exploration_array(j, 2)) == 0)
-          maze(exploration_array(j, 1), exploration_array(j, 2)) = 2;
-          if (distance_maze(exploration_array(j, 1), exploration_array(j, 2)) > (distance_maze(current_node(1), current_node(2)) + 1))
-              distance_maze(exploration_array(j, 1), exploration_array(j, 2))...
-                  = distance_maze(current_node(1), current_node(2)) + 1;
+          distance_maze(exploration_array(j, 1), exploration_array(j, 2))...
+              = distance_maze(current_node(1), current_node(2)) + 1;
+          distance = distance_maze(exploration_array(j, 1), ...
+              exploration_array(j, 2));
+          cost = sum(abs(exploration_array(j, :) - goal)) + distance; 
+          % Mark as on the frontier
+          if (maze(exploration_array(j, 1), exploration_array(j, 2)) ~= 2)
+              maze(exploration_array(j, 1), exploration_array(j, 2)) = 2;
+              rectangle('Position',[...
+                exploration_array(j, 1)-box_width/2 ...
+                exploration_array(j, 2)-box_width/2 ...
+                box_width box_width], 'FaceColor', [0 1 1])
           end
-          distance = sum(abs(exploration_array(j, :) - goal));
-          
           frontier = min_heap_insert(frontier, ...
-              [exploration_array(j, :), distance], column, N);
+              [exploration_array(j, :), cost], column, N);
           N = N + 1;
-          rectangle('Position',[...
-            exploration_array(j, 1)-box_width/2 ...
-            exploration_array(j, 2)-box_width/2 ...
-            box_width box_width], 'FaceColor', [0 1 1])
+          
        else
            if (maze(exploration_array(j, 1), exploration_array(j, 2)) == 3)
                distance_maze(exploration_array(j, 1), exploration_array(j, 2))...
@@ -138,7 +162,7 @@ for t = 1:max_iterations
            end
        end
     end
-    
+    maze(current_node(1), current_node(2)) = -1;
     if finished
         break;
     end
@@ -167,8 +191,7 @@ for i = 1:max_iterations
         retrace_node + [-1, 0]; 
         retrace_node + [0, -1]];
     for j=1:length(retrace_array)
-        if distance_maze(retrace_array(j, 1), retrace_array(j, 2)) < distance_maze(retrace_node(1), retrace_node(2))...
-                && maze(retrace_array(j, 1), retrace_array(j, 2)) == -1
+        if distance_maze(retrace_array(j, 1), retrace_array(j, 2)) < distance_maze(retrace_node(1), retrace_node(2))
            path_nodes(path_node_index, :) = retrace_array(j, :);
            retrace_node = retrace_array(j, :);
            break;
