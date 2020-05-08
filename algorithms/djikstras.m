@@ -141,6 +141,7 @@ for t = 1:max_iterations
     
     figure(1);
 end
+fprintf("Number of iterations %.0f", t);
 path_nodes = zeros(1000, 2);
 path_nodes(1, :) = goal;
 path_node_index = 2;

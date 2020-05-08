@@ -5,7 +5,7 @@ function print_heap(array, column, N)
         start = pow2(i);
         finish = pow2(i) + pow2(i) - 1;
         for j = start:finish
-           fprintf('%.0f ', array(j, column));
+           fprintf('%.2f ', array(j, column));
 
            if j == N
                fprintf('\n')

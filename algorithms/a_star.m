@@ -118,6 +118,7 @@ for t = 1:max_iterations
     if t == 1
         min_distance = 0;
     end
+    % Updating distance to current node based on other adjacent squares
     for k=1:length(exploration_array)
         if (distance_maze(exploration_array(k, 1), ...
                 exploration_array(k, 2)) + 1 < min_distance)
@@ -139,7 +140,9 @@ for t = 1:max_iterations
               = distance_maze(current_node(1), current_node(2)) + 1;
           distance = distance_maze(exploration_array(j, 1), ...
               exploration_array(j, 2));
-          cost = sum(abs(exploration_array(j, :) - goal)) + distance; 
+          manhattan = sum(abs(exploration_array(j, :) - goal));
+          euclidean = sqrt(sum((exploration_array(j, :) - goal).^2));
+          cost = manhattan + 1.01*distance; 
           % Mark as on the frontier
           if (maze(exploration_array(j, 1), exploration_array(j, 2)) ~= 2)
               maze(exploration_array(j, 1), exploration_array(j, 2)) = 2;
@@ -156,7 +159,7 @@ for t = 1:max_iterations
            if (maze(exploration_array(j, 1), exploration_array(j, 2)) == 3)
                distance_maze(exploration_array(j, 1), exploration_array(j, 2))...
                   = distance_maze(current_node(1), current_node(2)) + 1;
-               fprintf("\nGoal state reached")
+               fprintf("\nGoal state reached\n")
                finished = 1;
                break;
            end
@@ -169,6 +172,7 @@ for t = 1:max_iterations
     
     figure(1);
 end
+fprintf("Number of iterations %.0f", t);
 path_nodes = zeros(1000, 2);
 path_nodes(1, :) = goal;
 path_node_index = 2;
