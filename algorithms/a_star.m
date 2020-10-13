@@ -85,6 +85,7 @@ rectangle('Position', [starting_position(1)-box_width/2 starting_position(2)-box
 axis([1, sz(1), 1, sz(2)]);
 pbaspect([1 1 1]);
 camroll(270);
+figure(1);
 %% Main Loop:
 for t = 1:max_iterations
     %% Checking to see if frontier empty
